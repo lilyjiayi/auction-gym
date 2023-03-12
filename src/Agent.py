@@ -8,7 +8,7 @@ from Models import sigmoid
 class Agent:
     ''' An agent representing an advertiser '''
 
-    def __init__(self, rng, name, num_items, item_values, allocator, bidder, memory=0):
+    def __init__(self, rng, name, num_items, item_values, allocator, bidder, memory=0, budget=-1):
         self.rng = rng
         self.name = name
         self.num_items = num_items
@@ -25,6 +25,12 @@ class Agent:
         self.bidder = bidder
 
         self.memory = memory
+        self.init_budget = budget
+        self.curr_budget = budget
+        print(f"{name} budget: {self.curr_budget}")
+    
+    def reset_budget(self):
+        self.curr_budget = self.init_budget
 
     def select_item(self, context):
         # Estimate CTR for all items
@@ -50,6 +56,10 @@ class Agent:
 
         # Get the bid
         bid = self.bidder.bid(value, context, estimated_CTR)
+        # cap the bid at the current the budget if there exists a budget
+        if self.curr_budget >= 0:
+            if bid > self.curr_budget: 
+                bid = self.curr_budget
 
         # Log what we know so far
         self.logs.append(ImpressionOpportunity(context=context,
@@ -72,6 +82,7 @@ class Agent:
         last_value = self.logs[-1].value * outcome
         self.net_utility += (last_value - price)
         self.gross_utility += last_value
+        self.curr_budget -= price
 
     def set_price(self, price):
         self.logs[-1].set_price(price)

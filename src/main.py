@@ -84,7 +84,8 @@ def instantiate_agents(rng, agent_configs, agents2item_values, agents2items):
               item_values=agents2item_values[agent_config['name']],
               allocator=eval(f"{agent_config['allocator']['type']}(rng=rng{parse_kwargs(agent_config['allocator']['kwargs'])})"),
               bidder=eval(f"{agent_config['bidder']['type']}(rng=rng{parse_kwargs(agent_config['bidder']['kwargs'])})"),
-              memory=(0 if 'memory' not in agent_config.keys() else agent_config['memory']))
+              memory=(0 if 'memory' not in agent_config.keys() else agent_config['memory']),
+              budget=agent_config['budget'])
         for agent_config in agent_configs
     ]
 
@@ -150,6 +151,7 @@ def simulation_run():
             print('Average Best Value for Agent: ', best_expected_value)
             agent.clear_utility()
             agent.clear_logs()
+            agent.reset_budget()
 
         auction_revenue.append(auction.revenue)
         auction.clear_revenue()
