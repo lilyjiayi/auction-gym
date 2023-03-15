@@ -1,6 +1,6 @@
 {
     "random_seed": 0,
-    "num_runs": 3,
+    "num_runs": 1,
     "num_iter" : 100,
     "rounds_per_iter": 100,
     "num_participants_per_round": 2,
@@ -11,7 +11,7 @@
     "agents": [ {
       "name": "Oracle, DM (search), without budget",
       "num_copies": 1,
-      "num_items": 12,
+      "num_items": 50,
         "allocator": {
           "type": "OracleAllocator",
           "kwargs": {}
@@ -27,9 +27,9 @@
       "budget": -1 
     }, 
     {
-        "name": "Oracle, DM (search), with budget",
+        "name": "Oracle, DM (search), without budget",
         "num_copies": 1,
-        "num_items": 12,
+        "num_items": 50,
           "allocator": {
             "type": "OracleAllocator",
             "kwargs": {}
@@ -42,8 +42,8 @@
                 "inference": "\"search\"" 
               }
         },
-        "budget": 20  
+        "budget": -1 
       }],
-    "output_dir": "results/test_2player_budget/"
+    "output_dir": "results/2player_nobudget_search_50items(0)/"
   }
   

@@ -55,11 +55,11 @@ class Agent:
         value = self.item_values[best_item]
 
         # Get the bid
-        bid = self.bidder.bid(value, context, estimated_CTR)
-        # cap the bid at the current the budget if there exists a budget
-        if self.curr_budget >= 0:
-            if bid > self.curr_budget: 
-                bid = self.curr_budget
+        bid = self.bidder.bid(value, context, estimated_CTR, budget = self.curr_budget)
+        # # cap the bid at the current the budget if there exists a budget
+        # if self.curr_budget >= 0:
+        #     if bid > self.curr_budget: 
+        #         bid = self.curr_budget
 
         # Log what we know so far
         self.logs.append(ImpressionOpportunity(context=context,

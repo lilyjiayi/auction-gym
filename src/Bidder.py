@@ -168,7 +168,7 @@ class ValueLearningBidder(Bidder):
         self.model_initialised = False
         super(ValueLearningBidder, self).__init__(rng)
 
-    def bid(self, value, context, estimated_CTR):
+    def bid(self, value, context, estimated_CTR, budget = -1):
         # Compute the bid as expected value
         bid = value * estimated_CTR
         if not self.model_initialised:
@@ -205,6 +205,10 @@ class ValueLearningBidder(Bidder):
         bid *= gamma
         self.gammas.append(gamma)
         self.propensities.append(propensity)
+        # cap the bid at the current the budget if there exists a budget
+        if budget >= 0:
+            if bid > budget: 
+                bid = budget
         return bid
 
     def update(self, contexts, values, bids, prices, outcomes, estimated_CTRs, won_mask, iteration, plot, figsize, fontsize, name):
