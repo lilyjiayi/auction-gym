@@ -67,6 +67,36 @@ def parse_config(path):
         for agent_config in agent_configs
     }
 
+
+    # Checks if we want specific agents to have the same items/values or to have the same mean of item values
+    uniform_item_values = None
+    uniform_item_embs = None
+    uniform_mean_value = None
+    for agent_config in agent_configs:
+        name = agent_config['name']
+        item_values = agents2item_values[name]
+        items = agents2items[name]
+        if ('same_item_value' in agent_config) and (agent_config['same_item_value'] == 1):
+            # if 'same_item_value' == 1, agents have the exactly same item embeddings and item values
+            # need to ensure that agents have the same num_items 
+            if uniform_item_values is None: 
+                uniform_item_values = item_values
+                uniform_item_embs = items
+            else:
+                assert agent_config["num_items"] == len(item_values), "Agents with same_item_value == 1 need to have the same number of items."
+                agents2item_values[name] = uniform_item_values
+                agents2items[name] = uniform_item_embs
+        elif ('uniform_mean_value' in agent_config) and (agent_config['uniform_mean_value'] == 1):
+            # Need to omit 'same_item_value' or set 'same_item_value' == 0 to use the following function
+            # Scale item_values such that agents with 'uniform_mean_value' == 1 have the same mean of item values
+            # Note that even if agents have the same mean value, their expected value could still vary significantly because of the difference in item embeddings
+            if uniform_mean_value is None: 
+                uniform_mean_value = np.mean(item_values)
+            else:
+                agents2item_values[name] = item_values * uniform_mean_value / np.mean(item_values)
+        print(f"{name} value mean: {np.mean(agents2item_values[name])}")
+
+    
     # Add intercepts to embeddings (Uniformly in [-4.5, -1.5], this gives nicer distributions for P(click))
     for agent, items in agents2items.items():
         agents2items[agent] = np.hstack((items, - 3.0 - 1.0 * rng.random((items.shape[0], 1))))

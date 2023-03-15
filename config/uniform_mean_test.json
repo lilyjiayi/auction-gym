@@ -1,0 +1,48 @@
+{
+    "random_seed": 0,
+    "num_runs": 1,
+    "num_iter" : 20,
+    "rounds_per_iter": 100,
+    "num_participants_per_round": 4,
+    "embedding_size": 5,
+    "embedding_var": 1.0,
+    "obs_embedding_size": 4,
+    "allocation": "FirstPrice",
+    "agents": [ {
+      "name": "Oracle, DM (search), same mean",
+      "num_copies": 2,
+      "num_items": 12,
+      "same_item_value": 0,
+      "uniform_mean_value": 1, 
+        "allocator": {
+          "type": "OracleAllocator",
+          "kwargs": {}
+        },
+        "bidder": {
+            "type": "ValueLearningBidder",
+            "kwargs": {
+              "gamma_sigma":  0.02,
+              "init_gamma": 1.0,
+              "inference": "\"search\"" 
+            }
+      }
+    }, {
+        "name": "Oracle, DM (search), same item value",
+        "num_copies": 2,
+        "num_items": 12,
+        "same_item_value": 1, 
+          "allocator": {
+            "type": "OracleAllocator",
+            "kwargs": {}
+          },
+          "bidder": {
+              "type": "ValueLearningBidder",
+              "kwargs": {
+                "gamma_sigma":  0.02,
+                "init_gamma": 1.0,
+                "inference": "\"search\"" 
+              }
+        }
+      }],
+    "output_dir": "results/FP_DM_Oracle_UMean/"
+  }
