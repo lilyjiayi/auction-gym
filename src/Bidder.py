@@ -169,6 +169,7 @@ class ValueLearningBidder(Bidder):
         self.use_time_info = True if use_time_info == 1 else False
         if self.use_time_info:
             self.winrate_model = PyTorchTimestepWinRateEstimator()
+            if inference == 'policy': self.bidding_policy = TimestepBidShadingPolicy()
         super(ValueLearningBidder, self).__init__(rng)
 
     def bid(self, value, context, estimated_CTR, budget = -1, remaining_rounds = 0):
@@ -204,7 +205,10 @@ class ValueLearningBidder(Bidder):
 
         elif self.inference == 'policy':
             # Option 3: sample from the learnt policy instead of brute force searching
-            x = torch.Tensor([estimated_CTR, value])
+            if self.use_time_info:
+                x = torch.Tensor([estimated_CTR, value, remaining_rounds, budget])
+            else:
+                x = torch.Tensor([estimated_CTR, value])
             with torch.no_grad():
                 gamma, propensity = self.bidding_policy(x)
                 gamma = gamma.detach().item()
@@ -218,7 +222,7 @@ class ValueLearningBidder(Bidder):
                 bid = budget
         return bid
 
-    def update(self, contexts, values, bids, prices, outcomes, estimated_CTRs, won_mask, iteration, plot, figsize, fontsize, name, remaining_rounds = None):
+    def update(self, contexts, values, bids, prices, outcomes, estimated_CTRs, won_mask, iteration, plot, figsize, fontsize, name, remaining_rounds=None, remaining_budgets=None):
         # FALLBACK: if you lost every auction you participated in, your model collapsed
         # Revert to not shading for 1 round, to collect data with informational value
         if not won_mask.astype(np.uint8).sum():
@@ -294,7 +298,10 @@ class ValueLearningBidder(Bidder):
 
         if self.inference == 'policy':
             # Learn a policy to maximise E[U | bid] where bid ~ policy
-            X = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1))))
+            if self.use_time_info:
+                X = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1), remaining_rounds.reshape(-1,1), remaining_budgets.reshape(-1,1))))
+            else:
+                X = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1))))
 
             self.bidding_policy.train()
             epochs = 8192 * 2
@@ -309,7 +316,12 @@ class ValueLearningBidder(Bidder):
                 sampled_gamma, propensities = self.bidding_policy(X)
 
                 # Add them to input for win probability model
-                X_with_gamma = torch.hstack((X, sampled_gamma))
+                if self.use_time_info:
+                    X_with_gamma = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1), np.array(sampled_gamma.detach()), remaining_rounds.reshape(-1, 1))))
+                    # torch.hstack((X, sampled_gamma, torch.Tensor(remaining_rounds.reshape(-1, 1))))
+                else:
+                    # X_with_gamma = torch.hstack((X, sampled_gamma))
+                    X_with_gamma = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1), np.array(sampled_gamma.detach()))))
 
                 # Estimate utility for these sampled bid shading values
                 prob_win = self.winrate_model(X_with_gamma).squeeze()

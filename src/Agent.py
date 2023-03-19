@@ -74,7 +74,8 @@ class Agent:
                                                second_price=0.0,
                                                outcome=0,
                                                won=False,
-                                               remaining_rounds=remaining_rounds))
+                                               remaining_rounds=remaining_rounds,
+                                               remaining_budget=self.curr_budget))
 
         return bid, best_item
 
@@ -98,13 +99,15 @@ class Agent:
         outcomes = np.array(list(opp.outcome for opp in self.logs))
         estimated_CTRs = np.array(list(opp.estimated_CTR for opp in self.logs))
         remaining_rounds = np.array(list(opp.remaining_rounds for opp in self.logs))
+        remaining_budgets = np.array(list(opp.remaining_budget for opp in self.logs))
+
 
         # Update response model with data from winning bids
         won_mask = np.array(list(opp.won for opp in self.logs))
         self.allocator.update(contexts[won_mask], items[won_mask], outcomes[won_mask], iteration, plot, figsize, fontsize, self.name)
 
         # Update bidding model with all data
-        self.bidder.update(contexts, values, bids, prices, outcomes, estimated_CTRs, won_mask, iteration, plot, figsize, fontsize, self.name, remaining_rounds = remaining_rounds)
+        self.bidder.update(contexts, values, bids, prices, outcomes, estimated_CTRs, won_mask, iteration, plot, figsize, fontsize, self.name, remaining_rounds=remaining_rounds, remaining_budgets=remaining_budgets)
 
     def get_allocation_regret(self):
         ''' How much value am I missing out on due to suboptimal allocation? '''

@@ -104,11 +104,11 @@ class BidShadingPolicy(torch.nn.Module):
 
 class TimestepBidShadingPolicy(torch.nn.Module):
     def __init__(self):
-        super(BidShadingPolicy, self).__init__()
+        super(TimestepBidShadingPolicy, self).__init__()
         # Input: P(click), value, remaining_round, remaining_budget
         # Output: mu, sigma for Gaussian bid shading distribution
         # Learnt to maximise E[P(win|gamma)*(value - price)] when gamma ~ N(mu, sigma)
-        self.shared_linear = torch.nn.Linear(2, 2, bias=True)
+        self.shared_linear = torch.nn.Linear(4, 2, bias=True)
 
         self.mu_linear_hidden = torch.nn.Linear(2, 2)
         self.mu_linear_out = torch.nn.Linear(2, 1)

@@ -8,6 +8,7 @@ import seaborn as sns
 from collections import defaultdict
 from copy import deepcopy
 from tqdm import tqdm
+import shutil
 
 from Agent import Agent
 from AuctionAllocation import * # FirstPrice, SecondPrice
@@ -198,6 +199,13 @@ if __name__ == '__main__':
     # Parse configuration file
     rng, config, agent_configs, agents2items, agents2item_values, num_runs, max_slots, embedding_size, embedding_var, obs_embedding_size = parse_config(args.config)
 
+    # Make sure we can write results
+    output_dir = config['output_dir']
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    print("Saving config file")
+    shutil.copy(args.config, output_dir)
+
     # Plotting config
     FIGSIZE = (8, 5)
     FONTSIZE = 14
@@ -257,8 +265,10 @@ if __name__ == '__main__':
         run2auction_revenue[run] = auction_revenue
 
     # Make sure we can write results
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    # if not os.path.exists(output_dir):
+    #     os.makedirs(output_dir)
+    # print("Saving config file")
+    # shutil.copy(args.config, config['output_dir'])
 
     def measure_per_agent2df(run2agent2measure, measure_name):
         df_rows = {'Run': [], 'Agent': [], 'Iteration': [], measure_name: []}
