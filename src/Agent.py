@@ -47,7 +47,7 @@ class Agent:
 
         return best_item, estim_CTRs[best_item]
 
-    def bid(self, context):
+    def bid(self, context, remaining_rounds = 0):
         # First, pick what item we want to choose
         best_item, estimated_CTR = self.select_item(context)
 
@@ -55,7 +55,7 @@ class Agent:
         value = self.item_values[best_item]
 
         # Get the bid
-        bid = self.bidder.bid(value, context, estimated_CTR, budget = self.curr_budget)
+        bid = self.bidder.bid(value, context, estimated_CTR, budget = self.curr_budget, remaining_rounds = remaining_rounds)
         # # cap the bid at the current the budget if there exists a budget
         # if self.curr_budget >= 0:
         #     if bid > self.curr_budget: 
@@ -73,7 +73,8 @@ class Agent:
                                                price=0.0,
                                                second_price=0.0,
                                                outcome=0,
-                                               won=False))
+                                               won=False,
+                                               remaining_rounds=remaining_rounds))
 
         return bid, best_item
 
@@ -96,13 +97,14 @@ class Agent:
         prices = np.array(list(opp.price for opp in self.logs))
         outcomes = np.array(list(opp.outcome for opp in self.logs))
         estimated_CTRs = np.array(list(opp.estimated_CTR for opp in self.logs))
+        remaining_rounds = np.array(list(opp.remaining_rounds for opp in self.logs))
 
         # Update response model with data from winning bids
         won_mask = np.array(list(opp.won for opp in self.logs))
         self.allocator.update(contexts[won_mask], items[won_mask], outcomes[won_mask], iteration, plot, figsize, fontsize, self.name)
 
         # Update bidding model with all data
-        self.bidder.update(contexts, values, bids, prices, outcomes, estimated_CTRs, won_mask, iteration, plot, figsize, fontsize, self.name)
+        self.bidder.update(contexts, values, bids, prices, outcomes, estimated_CTRs, won_mask, iteration, plot, figsize, fontsize, self.name, remaining_rounds = remaining_rounds)
 
     def get_allocation_regret(self):
         ''' How much value am I missing out on due to suboptimal allocation? '''

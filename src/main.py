@@ -67,6 +67,34 @@ def parse_config(path):
         for agent_config in agent_configs
     }
 
+    # Checks if we want specific agents to have the same items/values or to have the same mean of item values
+    uniform_item_values = None
+    uniform_item_embs = None
+    uniform_mean_value = None
+    for agent_config in agent_configs:
+        name = agent_config['name']
+        item_values = agents2item_values[name]
+        items = agents2items[name]
+        if ('same_item_value' in agent_config) and (agent_config['same_item_value'] == 1):
+            # if 'same_item_value' == 1, agents have the exactly same item embeddings and item values
+            # need to ensure that agents have the same num_items 
+            if uniform_item_values is None: 
+                uniform_item_values = item_values
+                uniform_item_embs = items
+            else:
+                assert agent_config["num_items"] == len(item_values), "Agents with same_item_value == 1 need to have the same number of items."
+                agents2item_values[name] = uniform_item_values
+                agents2items[name] = uniform_item_embs
+        elif ('uniform_mean_value' in agent_config) and (agent_config['uniform_mean_value'] == 1):
+            # Need to omit 'same_item_value' or set 'same_item_value' == 0 to use the following function
+            # Scale item_values such that agents with 'uniform_mean_value' == 1 have the same mean of item values
+            # Note that even if agents have the same mean value, their expected value could still vary significantly because of the difference in item embeddings
+            if uniform_mean_value is None: 
+                uniform_mean_value = np.mean(item_values)
+            else:
+                agents2item_values[name] = item_values * uniform_mean_value / np.mean(item_values)
+        print(f"{name} value mean: {np.mean(agents2item_values[name])}")
+
     # Add intercepts to embeddings (Uniformly in [-4.5, -1.5], this gives nicer distributions for P(click))
     for agent, items in agents2items.items():
         agents2items[agent] = np.hstack((items, - 3.0 - 1.0 * rng.random((items.shape[0], 1))))
@@ -77,6 +105,10 @@ def parse_config(path):
 def instantiate_agents(rng, agent_configs, agents2item_values, agents2items):
     # Store agents to be re-instantiated in subsequent runs
     # Set up agents
+    # parse_kwargs(agent_config['allocator']['kwargs'])
+    # print("Success parsing allocator args")
+    # parse_kwargs(agent_config['bidder']['kwargs'])
+    # print("Success parsing bidder args")
     agents = [
         Agent(rng=rng,
               name=agent_config['name'],
@@ -85,7 +117,8 @@ def instantiate_agents(rng, agent_configs, agents2item_values, agents2items):
               allocator=eval(f"{agent_config['allocator']['type']}(rng=rng{parse_kwargs(agent_config['allocator']['kwargs'])})"),
               bidder=eval(f"{agent_config['bidder']['type']}(rng=rng{parse_kwargs(agent_config['bidder']['kwargs'])})"),
               memory=(0 if 'memory' not in agent_config.keys() else agent_config['memory']),
-              budget=agent_config['budget'])
+              budget=agent_config['budget']
+              )
         for agent_config in agent_configs
     ]
 
@@ -114,8 +147,8 @@ def simulation_run():
     for i in range(num_iter):
         print(f'==== ITERATION {i} ====')
 
-        for _ in tqdm(range(rounds_per_iter)):
-            auction.simulate_opportunity()
+        for i in tqdm(range(rounds_per_iter)):
+            auction.simulate_opportunity(remaining_rounds = rounds_per_iter - i - 1)
 
         names = [agent.name for agent in auction.agents]
         net_utilities = [agent.net_utility for agent in auction.agents]

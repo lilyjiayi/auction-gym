@@ -25,7 +25,7 @@ class Auction:
 
         self.num_participants_per_round = num_participants_per_round
 
-    def simulate_opportunity(self):
+    def simulate_opportunity(self, remaining_rounds = 0):
         # Sample the number of slots uniformly between [1, max_slots]
         num_slots = self.rng.integers(1, self.max_slots + 1)
 
@@ -44,9 +44,9 @@ class Auction:
         for agent in participating_agents:
             # Get the bid and the allocated item
             if isinstance(agent.allocator, OracleAllocator):
-                bid, item = agent.bid(true_context)
+                bid, item = agent.bid(true_context, remaining_rounds = remaining_rounds)
             else:
-                bid, item = agent.bid(obs_context)
+                bid, item = agent.bid(obs_context, remaining_rounds = remaining_rounds)
             bids.append(bid)
             # Compute the true CTRs for items in this agent's catalogue
             true_CTR = sigmoid(true_context @ self.agent2items[agent.name].T)

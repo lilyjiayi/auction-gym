@@ -61,11 +61,51 @@ class PyTorchWinRateEstimator(torch.nn.Module):
     def forward(self, x):
         return self.model(x)
 
+class PyTorchTimestepWinRateEstimator(torch.nn.Module):
+    def __init__(self):
+        super(PyTorchTimestepWinRateEstimator, self).__init__()
+        # Input  P(click), the value, the bid shading factor, and remaining rounds of auctions
+        self.model = torch.nn.Sequential(
+            torch.nn.Linear(4, 1, bias=True),
+            torch.nn.Sigmoid()
+        )
+        self.eval()
+
+    def forward(self, x):
+        return self.model(x)
+
 
 class BidShadingPolicy(torch.nn.Module):
     def __init__(self):
         super(BidShadingPolicy, self).__init__()
         # Input: P(click), value
+        # Output: mu, sigma for Gaussian bid shading distribution
+        # Learnt to maximise E[P(win|gamma)*(value - price)] when gamma ~ N(mu, sigma)
+        self.shared_linear = torch.nn.Linear(2, 2, bias=True)
+
+        self.mu_linear_hidden = torch.nn.Linear(2, 2)
+        self.mu_linear_out = torch.nn.Linear(2, 1)
+
+        self.sigma_linear_hidden = torch.nn.Linear(2, 2)
+        self.sigma_linear_out = torch.nn.Linear(2, 1)
+        self.eval()
+
+        self.min_sigma = 1e-2
+
+    def forward(self, x):
+        x = self.shared_linear(x)
+        mu = torch.nn.Softplus()(self.mu_linear_out(torch.nn.Softplus()(x)))
+        sigma = torch.nn.Softplus()(self.sigma_linear_out(torch.nn.Softplus()(x))) + self.min_sigma
+        dist = torch.distributions.normal.Normal(mu, sigma)
+        sampled_value = dist.rsample()
+        propensity = torch.exp(dist.log_prob(sampled_value))
+        sampled_value = torch.clip(sampled_value, min=0.0, max=1.0)
+        return sampled_value, propensity
+
+class TimestepBidShadingPolicy(torch.nn.Module):
+    def __init__(self):
+        super(BidShadingPolicy, self).__init__()
+        # Input: P(click), value, remaining_round, remaining_budget
         # Output: mu, sigma for Gaussian bid shading distribution
         # Learnt to maximise E[P(win|gamma)*(value - price)] when gamma ~ N(mu, sigma)
         self.shared_linear = torch.nn.Linear(2, 2, bias=True)
