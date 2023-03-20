@@ -302,6 +302,7 @@ class ValueLearningBidder(Bidder):
                 X = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1), remaining_rounds.reshape(-1,1), remaining_budgets.reshape(-1,1))))
             else:
                 X = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1))))
+            X_2 = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1))))
 
             self.bidding_policy.train()
             epochs = 8192 * 2
@@ -316,13 +317,12 @@ class ValueLearningBidder(Bidder):
                 sampled_gamma, propensities = self.bidding_policy(X)
 
                 # Add them to input for win probability model
+                # X_2 = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1))))
+                X_with_gamma = torch.hstack((X_2, sampled_gamma))
                 if self.use_time_info:
-                    X_with_gamma = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1), np.array(sampled_gamma.detach()), remaining_rounds.reshape(-1, 1))))
-                    # torch.hstack((X, sampled_gamma, torch.Tensor(remaining_rounds.reshape(-1, 1))))
-                else:
-                    # X_with_gamma = torch.hstack((X, sampled_gamma))
-                    X_with_gamma = torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1), np.array(sampled_gamma.detach()))))
-
+                    X_with_gamma = torch.hstack((X_with_gamma, torch.Tensor(remaining_rounds.reshape(-1, 1))))
+                    # torch.Tensor(np.hstack((estimated_CTRs.reshape(-1,1), values.reshape(-1,1), np.array(sampled_gamma.detach()), remaining_rounds.reshape(-1, 1))))
+                
                 # Estimate utility for these sampled bid shading values
                 prob_win = self.winrate_model(X_with_gamma).squeeze()
                 values = X_with_gamma[:, 0].squeeze() * X_with_gamma[:, 1].squeeze()
@@ -352,10 +352,10 @@ class ValueLearningBidder(Bidder):
             #plt.show()
 
         self.model_initialised = True
-        if iteration == 99:
-            print(f"Curr iteration is {iteration}")
-            print(self.winrate_model.state_dict())
-            print(self.bidding_policy.state_dict())
+        # if iteration == 99:
+        #     print(f"Curr iteration is {iteration}")
+        #     print(self.winrate_model.state_dict())
+        #     print(self.bidding_policy.state_dict())
 
 
 

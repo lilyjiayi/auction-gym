@@ -100,14 +100,16 @@ class Agent:
         estimated_CTRs = np.array(list(opp.estimated_CTR for opp in self.logs))
         remaining_rounds = np.array(list(opp.remaining_rounds for opp in self.logs))
         remaining_budgets = np.array(list(opp.remaining_budget for opp in self.logs))
-
-
+            
         # Update response model with data from winning bids
         won_mask = np.array(list(opp.won for opp in self.logs))
         self.allocator.update(contexts[won_mask], items[won_mask], outcomes[won_mask], iteration, plot, figsize, fontsize, self.name)
 
         # Update bidding model with all data
         self.bidder.update(contexts, values, bids, prices, outcomes, estimated_CTRs, won_mask, iteration, plot, figsize, fontsize, self.name, remaining_rounds=remaining_rounds, remaining_budgets=remaining_budgets)
+        
+        data = np.hstack((remaining_rounds.reshape(-1,1), remaining_budgets.reshape(-1,1), bids.reshape(-1,1), prices.reshape(-1,1), values.reshape(-1,1), estimated_CTRs.reshape(-1,1)))
+        return data
 
     def get_allocation_regret(self):
         ''' How much value am I missing out on due to suboptimal allocation? '''

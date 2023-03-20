@@ -145,6 +145,7 @@ def instantiate_auction(rng, config, agents2items, agents2item_values, agents, m
 
 
 def simulation_run():
+    full_round_perf = []
     for i in range(num_iter):
         print(f'==== ITERATION {i} ====')
 
@@ -161,7 +162,9 @@ def simulation_run():
         print(f'\tAuction revenue: \t {auction.revenue}')
 
         for agent_id, agent in enumerate(auction.agents):
-            agent.update(iteration=i, plot=True, figsize=FIGSIZE, fontsize=FONTSIZE)
+            data = agent.update(iteration=i, plot=True, figsize=FIGSIZE, fontsize=FONTSIZE)
+            if i == num_iter -1 : 
+                full_round_perf.append(data)
 
             agent2net_utility[agent.name].append(agent.net_utility)
             agent2gross_utility[agent.name].append(agent.gross_utility)
@@ -189,6 +192,9 @@ def simulation_run():
 
         auction_revenue.append(auction.revenue)
         auction.clear_revenue()
+    
+    return full_round_perf
+
 
 if __name__ == '__main__':
     # Parse commandline arguments
@@ -247,7 +253,7 @@ if __name__ == '__main__':
         auction_revenue = []
 
         # Run simulation (with global parameters -- fine for the purposes of this script)
-        simulation_run()
+        full_round_perf = simulation_run()
 
         # Store
         run2agent2net_utility[run] = agent2net_utility
@@ -264,11 +270,10 @@ if __name__ == '__main__':
 
         run2auction_revenue[run] = auction_revenue
 
-    # Make sure we can write results
-    # if not os.path.exists(output_dir):
-    #     os.makedirs(output_dir)
-    # print("Saving config file")
-    # shutil.copy(args.config, config['output_dir'])
+    for i in range(len(full_round_perf)):
+        agent_perf = full_round_perf[i]
+        df = pd.DataFrame(agent_perf, columns = ['remaining_round', 'remaining_budget', 'bid', 'price', 'value', 'estimated_CTR'])
+        df.to_csv(os.path.join(output_dir, f"full_round_agent{i}.csv"))
 
     def measure_per_agent2df(run2agent2measure, measure_name):
         df_rows = {'Run': [], 'Agent': [], 'Iteration': [], measure_name: []}
