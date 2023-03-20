@@ -148,8 +148,8 @@ def simulation_run():
     for i in range(num_iter):
         print(f'==== ITERATION {i} ====')
 
-        for i in tqdm(range(rounds_per_iter)):
-            auction.simulate_opportunity(remaining_rounds = rounds_per_iter - i - 1)
+        for j in tqdm(range(rounds_per_iter)):
+            auction.simulate_opportunity(remaining_rounds = rounds_per_iter - j - 1)
 
         names = [agent.name for agent in auction.agents]
         net_utilities = [agent.net_utility for agent in auction.agents]

@@ -1,7 +1,7 @@
 {
     "random_seed": 0,
     "num_runs": 1,
-    "num_iter" : 50,
+    "num_iter" : 100,
     "rounds_per_iter": 100,
     "num_participants_per_round": 2,
     "embedding_size": 5,
@@ -9,10 +9,10 @@
     "obs_embedding_size": 4,
     "allocation": "FirstPrice",
     "agents": [ {
-        "name": "Oracle, DM (search), with time info",
+        "name": "Oracle, DM (policy),no time info",
         "num_copies": 1,
         "num_items": 12,
-        "same_item_value": 1, 
+        "same_item_value": 0, 
           "allocator": {
             "type": "OracleAllocator",
             "kwargs": {}
@@ -22,30 +22,30 @@
               "kwargs": {
                 "gamma_sigma":  0.02,
                 "init_gamma": 1.0,
-                "inference": "\"search\"",
-                "use_time_info": 1
-              }
-        },
-        "budget": 20
-      }, {
-        "name": "Oracle, DM (search), no time info",
-        "num_copies": 1,
-        "num_items": 12,
-        "same_item_value": 1, 
-          "allocator": {
-            "type": "OracleAllocator",
-            "kwargs": {}
-          },
-          "bidder": {
-              "type": "ValueLearningBidder",
-              "kwargs": {
-                "gamma_sigma":  0.02,
-                "init_gamma": 1.0,
-                "inference": "\"search\"" ,
+                "inference": "\"policy\"",
                 "use_time_info": 0
               }
         },
-        "budget": 20 
+        "budget": -1
+      }, {
+        "name": "Oracle, DM (policy), no time info",
+        "num_copies": 1,
+        "num_items": 12,
+        "same_item_value": 0, 
+          "allocator": {
+            "type": "OracleAllocator",
+            "kwargs": {}
+          },
+          "bidder": {
+              "type": "ValueLearningBidder",
+              "kwargs": {
+                "gamma_sigma":  0.02,
+                "init_gamma": 1.0,
+                "inference": "\"policy\"" ,
+                "use_time_info": 0
+              }
+        },
+        "budget": -1 
       }],
-    "output_dir": "results/FP_DM_Oracle_winrate_test/"
+    "output_dir": "results/Policy_nt_nb_nosameitem(0)/"
   }

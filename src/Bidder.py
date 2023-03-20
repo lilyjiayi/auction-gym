@@ -352,6 +352,12 @@ class ValueLearningBidder(Bidder):
             #plt.show()
 
         self.model_initialised = True
+        if iteration == 99:
+            print(f"Curr iteration is {iteration}")
+            print(self.winrate_model.state_dict())
+            print(self.bidding_policy.state_dict())
+
+
 
     def clear_logs(self, memory):
         if not memory:
